@@ -96,10 +96,16 @@ io.on('connection', socket => {
     }
   })
   //TODO: when a file url is sent you should save it to the rooms object under the specific room code
-  socket.on('add file', fileUrl => {
-    
+  socket.on('add file', (fileUrl, room) => {
+    try {
+      rooms[room].files.append(fileUrl);
+      console.log(room[room].files);
+      io.to(socket.id).emit('file upload', {status:true});
 
-    
+    } catch (error) {
+      io.to(socket.id).emit('file upload', {status:false});
+      console.log(error)
+    }
   })
 });
 
