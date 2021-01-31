@@ -8,7 +8,7 @@ app.set('view engine', 'pug');
 const server = require('http').Server(app);
 const io = require('socket.io')(server,{
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3000* https://fathomless-reef-52724.herokuapp.com/*",
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -79,18 +79,19 @@ io.on('connection', socket => {
   socket.on('create room', () => {
     let room = addRoomFunc(rooms)
     socket.join(room);
-    console.log(socket.userID)
+    console.log(socket.userID);
+    io.to(socket.id).emit('admit create', {status:true, room:room});
   })
   //TODO: using the room object above, you need to return to the user all the information that has been sent into that room. You can do that buy storing all of the room data inside the room object and then upon entering the room, sending all the new info. 
   //https://stackoverflow.com/questions/48561935/how-to-send-new-user-the-old-sent-messages-with-socket-io
   socket.on('join room', room => {
     if (rooms.hasOwnProperty(room)){
       socket.join(room);
-      io.to(socket.id).emit('admit', {status:true, room:room})
+      io.to(socket.id).emit('admit join', {status:true, room:room});
     }
     else{
       console.log("Sorry That's an invalid room code");
-      io.to(socket.id).emit('admit', {status:false, room:null})
+      io.to(socket.id).emit('admit', {status:false, room:null});
 
     }
   })
