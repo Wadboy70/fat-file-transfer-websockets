@@ -35,9 +35,10 @@ rooms = {
 // Creates the random 6  characters that serves property 
 const createRoomFunc = () =>{
   // This allows us to generate random bytes and each byte encoded to hex is worth 2 characters
-  const crypto = require("crypto");
-  const roomName = crypto.randomBytes(3).toString('hex');
-  return roomName;
+  var result = '';
+  let chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  for (var i = 6; i > 0; --i) result += chars[Math.round(Math.random() * (chars.length - 1))];
+  return result;
 };
 const addRoomFunc = rooms =>{
   let room = createRoomFunc();
