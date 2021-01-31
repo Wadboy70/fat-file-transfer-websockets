@@ -43,8 +43,16 @@ html(lang="en")
         var socket = io();
         $('form').submit(function(){
           console.log($('#m').val());
-          socket.emit('chat message', $('#m').val());
-          $('#m').val('');
+          socket.emit('join room', "1234");
+          socket.on('admit', value=>{
+            if(value.status == true){
+              console.log("Yay we're in");
+            }
+            else
+            {
+              console.log("Nope, didn't make it");
+            }
+          })
           return false;
         });
         socket.on('chat message', function(msg){
