@@ -3,35 +3,13 @@
 
 // [START appengine_websockets_app]
 const app = require('express')();
-app.set('view engine', 'pug');
-
-const server = require('http').Server(app);
-const io = require('socket.io')(server,{
-  cors: {
-    origin: "http://localhost:3000* https://fathomless-reef-52724.herokuapp.com/*",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
-});
+const port = process.env.PORT || 8080;
+const server = app.listen(port , console.log(`App listening on port ${port}`));
+const io = require('socket.io')(server);
 
 let numConnections = 0;
 const rooms = {};
-/*
-this is what the structure of the rooms object will be like
-rooms = {
-	H83G8:{
-		connections: 3,
-    files: [google.com, bing.com]
-    userIds: []
-	},
-	JT98F:{
-		connections: 2
-	},
-	IG45H:{
-		connections: 1
-	}
-}
-*/
+
 // Creates the random 6  characters that serves property 
 const createRoomFunc = () =>{
   // This allows us to generate random bytes and each byte encoded to hex is worth 2 characters
@@ -77,6 +55,7 @@ io.on('connection', socket => {
   });
   //TODO: This should make a new room and add it to the rooms object.
   socket.on('create room', () => {
+    console.log('hello')
     let room = addRoomFunc(rooms)
     socket.join(room);
     console.log(socket.userID);
@@ -87,10 +66,11 @@ io.on('connection', socket => {
   socket.on('join room', room => {
     if (rooms.hasOwnProperty(room)){
       socket.join(room);
+      io.to(socket.id).emit('update', rooms[`${room}`]?.files || []);
       io.to(socket.id).emit('admit join', {status:true, room:room});
     }
     else{
-      console.log("Sorry That's an invalid room code");
+      console.log("Sorry That's an invalid room code", socket.id);
       io.to(socket.id).emit('admit', {status:false, room:null});
 
     }
@@ -98,26 +78,22 @@ io.on('connection', socket => {
   //TODO: when a file url is sent you should save it to the rooms object under the specific room code
   socket.on('add file', (fileUrl, room) => {
     try {
-      rooms[room].files.append(fileUrl);
-      console.log(room[room].files);
-      io.to(socket.id).emit('file upload', {status:true});
+      console.log(rooms, room)
+      rooms[`${room}`].files.push(fileUrl);
+      console.log(rooms[`${room}`].files);
 
     } catch (error) {
-      io.to(socket.id).emit('file upload', {status:false});
+      rooms[room] = {
+        files: [fileUrl],
+        connections: 0
+      }
+      
       console.log(error)
+      console.log(rooms)
     }
+    io.sockets.in(room).emit('update', rooms[`${room}`].files || [])
+  })
+  socket.on('get files', (room) => {
+    socket.to(room).emit('update', rooms[`${room}`]?.files || []);
   })
 });
-
-
-//module connection (socket uses http to connect to things)
-if (module === require.main) {
-  const PORT = process.env.PORT || 8080;
-  server.listen(PORT, () => {
-    console.log(`App listening on port ${PORT}`);
-    console.log('Press Ctrl+C to quit.');
-  });
-}
-// [END appengine_websockets_app]
-
-module.exports = server;
